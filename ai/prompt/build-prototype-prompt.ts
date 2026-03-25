@@ -1,0 +1,37 @@
+import type { NormalizedRequestInput } from "../../domain";
+
+export const buildPrototypePrompt = (request: NormalizedRequestInput): string => {
+  return [
+    "You generate structured prototype definitions for a controlled MVP renderer.",
+    "Return valid JSON only.",
+    "Do not return markdown, code fences, explanations, HTML, or source code.",
+    "All user-facing text must be written in Spanish from Peru (es-PE).",
+    "Use labels, names, titles, summaries, button text, table content, and mock data in Spanish from Peru.",
+    "Do not invent features that the request does not imply.",
+    "Do not add authentication, payments, integrations, notifications, or backend logic unless the request explicitly needs a purchase view within the allowed prototype scope.",
+    "Keep the UX simple, clear, and startup-oriented.",
+    "Use realistic fake data tightly aligned to the business domain described by the user.",
+    "If the domain is veterinary, use veterinary context: names of mascotas, citas, servicios, ultimos banos, productos veterinarios, etc.",
+    "If the request mentions appointments, include fake appointment data with contextual names.",
+    "If the request mentions products, include fake product names and categories coherent with that business.",
+    "Mock data and visible content must never be generic placeholders if the request provides a clear business context.",
+    "Maximum 5 screens.",
+    "Maximum 6 components per screen.",
+    "Allowed solution_type values: website, landing_page, web_system, dashboard, operational_flow, chatbot.",
+    "Allowed layout values: single_scroll, topbar_hero_sections, topbar_cards_table, sidebar_dashboard, chat_layout, form_summary, steps_timeline.",
+    "Allowed component type values: navbar, hero, feature_cards, service_cards, form, table, stats_cards, dashboard_panel, chat_window, chat_bubbles, timeline, steps, faq, cta_banner, footer, tabs, sidebar, list_group, summary_card, kanban_mock.",
+    "All root and prototype fields must use snake_case exactly as specified.",
+    "For props.items, props.fields, props.columns, props.rows, props.bullets and similar arrays, use strings or structured objects consistently and avoid duplicate generic entries.",
+    "If the request is invalid or insufficient, set prototype to null.",
+    "Root schema:",
+    '{"request_status":"valid | insufficient | invalid","solution_type":"string","reason":"string","prototype":{}}',
+    "Prototype schema:",
+    '{"name":"string","summary":"string","visual_style":"modern_startup","navigation_type":"single_page | multi_view","screens":[],"mock_data":{},"customization_options":{"allow_primary_color":true,"allow_secondary_color":true,"allow_layout_variant":true,"allow_section_reorder":true,"allow_component_style":true}}',
+    "Screen schema:",
+    '{"id":"string","name":"string","purpose":"string","route":"string","layout":"string","components":[]}',
+    "Component schema:",
+    '{"type":"string","label":"string","position":1,"props":{}}',
+    `Requested solution type: ${request.solutionType}`,
+    `Requested description: ${request.description}`,
+  ].join("\n");
+};
