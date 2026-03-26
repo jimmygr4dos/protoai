@@ -2,7 +2,7 @@
 
 ## Objetivo UX
 
-El MVP busca que un usuario llegue rapido a un tangible sin perder claridad ni control. Por eso el flujo evita pedir datos de contacto al inicio y entrega valor primero.
+El MVP busca que un usuario llegue rapido a un tangible sin perder claridad ni control. Por eso el flujo evita pedir datos de contacto al inicio, entrega valor primero y organiza la experiencia como un wizard secuencial.
 
 ## Estructura actual
 
@@ -16,7 +16,7 @@ El usuario completa:
 La UI ofrece:
 
 - placeholder guiado
-- ayuda contextual
+- ayuda contextual minima
 - contador de caracteres
 - minimo recomendado de `40`
 - maximo sugerido de `700`
@@ -30,16 +30,41 @@ El sistema:
 - valida estructura localmente
 - clasifica semanticamente el brief con Gemini
 - genera el prototipo solo si la clasificacion es valida
-- presenta la propuesta en una vista simulada de dispositivo con `mobile` por defecto y alternativa `desktop`
+- muestra estados intermedios de validacion y generacion
 
-### Paso 3: Ajuste y cierre
+### Paso 3: Resultado
 
-El usuario puede:
+El usuario:
 
-- cambiar color principal
-- cambiar color secundario
-- revisar pantallas y resumen
-- dejar nombre, correo y telefono para continuar
+- revisa el preview principal
+- cambia entre `mobile` y `desktop`
+- recorre las pantallas generadas
+- decide si continuar a ajustes
+
+### Paso 4: Ajustes
+
+El usuario:
+
+- cambia color principal
+- cambia color secundario
+- observa el preview en tiempo real
+
+### Paso 5: Cierre
+
+El usuario:
+
+- deja nombre o razon social
+- deja correo
+- deja telefono
+- simula el siguiente paso del proyecto
+
+## Decisiones UX actuales
+
+- el hero grande fue removido para priorizar la tarea activa
+- la barra de pasos se redujo a una navegacion compacta
+- el preview no aparece al inicio; aparece desde el paso 3
+- el preview sigue visible en ajustes y cierre
+- se removieron bloques redundantes de resumen y contexto para simplificar la lectura
 
 ## Criterios de diseno aplicados
 
@@ -49,16 +74,26 @@ El usuario puede:
 - captura de lead despues de entregar valor
 - lenguaje claro en espanol
 - interfaz simple con estetica startup
-- preview visual orientado a cliente, no solo a demo tecnica
+- look inspirado en tono visual startup peruano, sin copiar marcas concretas
+- tipografia contemporanea con `Plus Jakarta Sans`
+- direccion minimalista y enfocada en tarea
 
 ## Componentes UX clave
 
 - `components/layout/flow-steps.tsx`
 - `components/request/request-form.tsx`
+- `components/wizard/generation-step.tsx`
 - `components/prototype/prototype-preview.tsx`
 - `components/prototype/prototype-canvas.tsx`
-- `components/prototype/prototype-summary.tsx`
 - `components/customization/customization-panel.tsx`
+- `components/contact/lead-capture-panel.tsx`
+- `components/prototype/protoai-workspace.tsx`
+
+## Riesgos UX aun abiertos
+
+- el paso 2 podria comunicar mejor el progreso real del sistema
+- el preview podria necesitar mas limpieza visual si se agregan mas bloques
+- faltan pruebas con usuarios reales para validar conversion y claridad del flujo
 
 ## Mejoras futuras sugeridas
 
@@ -66,3 +101,4 @@ El usuario puede:
 - previsualizacion de ejemplo por tipo de solucion
 - CTA final mas orientado a agenda o envio real
 - guardado de borrador del brief
+- refinamiento adicional de espaciados y estados interactivos
