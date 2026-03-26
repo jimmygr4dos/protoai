@@ -107,13 +107,6 @@ export const RequestForm = ({
         </div>
       </div>
 
-      <div className="proto-mini-card p-3 d-grid gap-2">
-        <div className="fw-semibold">Formula simple para escribir bien el brief</div>
-        <div className="proto-muted small">
-          Usuario principal + problema a resolver + informacion o acciones clave que debe ver primero.
-        </div>
-      </div>
-
       <div className="d-grid gap-2">
         <button
           className="btn btn-lg btn-dark d-inline-flex align-items-center justify-content-center gap-2"
@@ -134,4 +127,3 @@ export const RequestForm = ({
     </div>
   );
 };
-

@@ -8,14 +8,14 @@ import type {
   RequestClassificationResult,
   SolutionType,
 } from "@/domain";
-import { SOLUTION_TYPES } from "@/domain";
 import { FlowSteps } from "@/components/layout/flow-steps";
 import { RequestForm } from "@/components/request/request-form";
 import { PrototypePreview } from "@/components/prototype/prototype-preview";
 import { CustomizationPanel } from "@/components/customization/customization-panel";
-import { LoadingState } from "@/components/feedback/loading-state";
 import { ErrorState } from "@/components/feedback/error-state";
 import { SuccessMessage } from "@/components/feedback/success-message";
+import { GenerationStep } from "@/components/wizard/generation-step";
+import { LeadCapturePanel } from "@/components/contact/lead-capture-panel";
 
 interface GenerateResponse {
   classification: RequestClassificationResult;
@@ -26,6 +26,8 @@ interface GenerateResponse {
   } | null;
   error?: string;
 }
+
+type WizardStep = "brief" | "generate" | "preview" | "adjust" | "contact";
 
 const SOLUTION_LABELS: Record<SolutionType, string> = {
   website: "Sitio web",
@@ -42,6 +44,29 @@ const STATUS_LABELS: Record<string, string> = {
   invalid: "Invalido",
 };
 
+const STEP_CONTENT: Record<WizardStep, { title: string; helper: string }> = {
+  brief: {
+    title: "Paso 1. Define tu requerimiento",
+    helper: "Empieza con lo esencial para que ProtoAI pueda interpretar bien la idea.",
+  },
+  generate: {
+    title: "Paso 2. Validacion y generacion",
+    helper: "El sistema clasifica el brief y arma la primera propuesta navegable.",
+  },
+  preview: {
+    title: "Paso 3. Revisa el resultado",
+    helper: "Confirma si el prototipo ya representa la idea principal antes de seguir.",
+  },
+  adjust: {
+    title: "Paso 4. Ajusta la propuesta",
+    helper: "Aplica cambios visuales mientras observas el preview en tiempo real.",
+  },
+  contact: {
+    title: "Paso 5. Cierra la solicitud",
+    helper: "Deja tus datos para continuar con la siguiente conversacion del proyecto.",
+  },
+};
+
 export const ProtoAIWorkspace = () => {
   const [solutionType, setSolutionType] = useState<SolutionType>("website");
   const [description, setDescription] = useState("");
@@ -51,9 +76,11 @@ export const ProtoAIWorkspace = () => {
   const [classification, setClassification] = useState<RequestClassificationResult | null>(null);
   const [prototype, setPrototype] = useState<PrototypeDefinition | null>(null);
   const [prototypeResult, setPrototypeResult] = useState<PrototypeGenerationResult | null>(null);
+  const [currentStep, setCurrentStep] = useState<WizardStep>("brief");
 
   const canCustomize = useMemo(() => Boolean(prototype), [prototype]);
-  const activeStepId = prototype ? "adjust" : isLoading ? "generate" : "brief";
+  const shouldShowPreview = currentStep === "preview" || currentStep === "adjust" || currentStep === "contact";
+  const currentStepContent = STEP_CONTENT[currentStep];
   const completedStepIds = useMemo(() => {
     const completed: string[] = [];
 
@@ -61,17 +88,29 @@ export const ProtoAIWorkspace = () => {
       completed.push("brief");
     }
 
-    if (prototype) {
+    if (classification) {
       completed.push("generate");
     }
 
+    if (prototype) {
+      completed.push("preview", "adjust");
+    }
+
+    if (statusMessage?.toLowerCase().includes("solicitud") || statusMessage?.toLowerCase().includes("registro")) {
+      completed.push("contact");
+    }
+
     return completed;
-  }, [description, prototype]);
+  }, [classification, description, prototype, statusMessage]);
 
   const handleGenerate = async () => {
     setIsLoading(true);
     setErrorMessage(null);
     setStatusMessage(null);
+    setClassification(null);
+    setPrototype(null);
+    setPrototypeResult(null);
+    setCurrentStep("generate");
 
     try {
       const response = await fetch("/api/generate-prototype", {
@@ -97,6 +136,7 @@ export const ProtoAIWorkspace = () => {
       }
 
       setPrototype(data.prototypeResult.prototype);
+      setCurrentStep("preview");
       setStatusMessage("Tu prototipo ya esta listo para revisarlo y ajustarlo.");
     } catch {
       setPrototype(null);
@@ -113,6 +153,7 @@ export const ProtoAIWorkspace = () => {
 
     setIsLoading(true);
     setErrorMessage(null);
+    setStatusMessage(null);
 
     try {
       const response = await fetch("/api/apply-customization", {
@@ -170,48 +211,10 @@ export const ProtoAIWorkspace = () => {
     }
   };
 
-  return (
-    <div className="d-flex flex-column gap-4">
-      <section className="proto-panel p-4 p-lg-5 overflow-hidden">
-        <div className="row g-4 align-items-end">
-          <div className="col-lg-8 d-grid gap-3">
-            <div className="proto-kicker">ProtoAI MVP</div>
-            <h1 className="proto-hero-title m-0">Convierte una idea en un prototipo navegable.</h1>
-            <p className="lead proto-muted mb-0">
-              Completa un brief corto, genera una propuesta visual y usala para alinear alcance antes
-              de pasar a desarrollo.
-            </p>
-            <div className="d-flex flex-wrap gap-2">
-              <span className="proto-chip">Flujo guiado</span>
-              <span className="proto-chip">JSON estructurado</span>
-              <span className="proto-chip">Preview controlado</span>
-            </div>
-          </div>
-          <div className="col-lg-4">
-            <div className="proto-info-card d-grid gap-3">
-              <div>
-                <div className="proto-kicker mb-2">Alcance actual</div>
-                <h2 className="h5 mb-1">MVP para validar rapidamente</h2>
-                <p className="proto-muted mb-0">
-                  Sirve para aterrizar ideas, mostrar algo tangible y preparar la siguiente etapa del proyecto.
-                </p>
-              </div>
-              <div className="d-flex flex-wrap gap-2">
-                {SOLUTION_TYPES.map((type) => (
-                  <span key={type} className="badge rounded-pill proto-badge-soft px-3 py-2">
-                    {SOLUTION_LABELS[type]}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="proto-grid align-items-start">
-        <div className="proto-sidebar">
-          <FlowSteps activeStepId={activeStepId} completedStepIds={completedStepIds} />
-
+  const renderCurrentStep = () => {
+    switch (currentStep) {
+      case "brief":
+        return (
           <RequestForm
             description={description}
             isLoading={isLoading}
@@ -220,25 +223,92 @@ export const ProtoAIWorkspace = () => {
             onGenerate={handleGenerate}
             onSolutionTypeChange={(value) => setSolutionType(value as SolutionType)}
           />
+        );
+      case "generate":
+        return (
+          <GenerationStep
+            classification={classification}
+            errorMessage={errorMessage}
+            isLoading={isLoading}
+            onBack={() => setCurrentStep("brief")}
+            onContinue={() => setCurrentStep("preview")}
+          />
+        );
+      case "preview":
+        return (
+          <div className="proto-panel p-4 p-lg-5 d-grid gap-4">
+            <div className="proto-mini-card p-3 d-grid gap-2">
+              <div className="fw-semibold">Que revisar en este paso</div>
+              <div className="proto-muted small">
+                Evalua pantallas, estructura y enfoque general. Si la propuesta va bien, continua con los ajustes visuales.
+              </div>
+            </div>
 
+            <div className="d-flex flex-column flex-sm-row gap-2 justify-content-end">
+              <button className="btn btn-outline-dark" type="button" onClick={() => setCurrentStep("generate")}>
+                Ver validacion
+              </button>
+              <button className="btn btn-dark" disabled={!prototype} type="button" onClick={() => setCurrentStep("adjust")}>
+                Ir a ajustes
+              </button>
+            </div>
+          </div>
+        );
+      case "adjust":
+        return (
           <CustomizationPanel
             disabled={!canCustomize || isLoading}
             onApply={handleCustomize}
+            onBack={() => setCurrentStep("preview")}
+            onContinue={() => setCurrentStep("contact")}
+          />
+        );
+      case "contact":
+        return (
+          <LeadCapturePanel
+            disabled={!prototype || isLoading}
+            onBack={() => setCurrentStep("adjust")}
             onSubmit={handleSubmit}
           />
+        );
+      default:
+        return null;
+    }
+  };
 
-          {isLoading ? <LoadingState message="Estamos validando tu solicitud y armando el prototipo..." /> : null}
-          {errorMessage ? <ErrorState message={errorMessage} /> : null}
-          {statusMessage ? <SuccessMessage message={statusMessage} /> : null}
+  return (
+    <div className="d-flex flex-column gap-3">
+      <section className="proto-toolbar">
+        <div>
+          <div className="proto-toolbar-brand">ProtoAI</div>
+          <div className="proto-toolbar-helper">Genera un prototipo guiado en pocos pasos.</div>
         </div>
+        <div className="proto-toolbar-step">
+          <div className="proto-kicker mb-1">Paso actual</div>
+          <div className="fw-semibold">{currentStepContent.title}</div>
+          <div className="proto-muted small">{currentStepContent.helper}</div>
+        </div>
+      </section>
 
-        <PrototypePreview
-          classification={classification}
-          prototype={prototype}
-          prototypeResult={prototypeResult}
-          statusLabels={STATUS_LABELS}
-          solutionLabels={SOLUTION_LABELS}
-        />
+      <FlowSteps activeStepId={currentStep} completedStepIds={completedStepIds} />
+
+      {errorMessage && currentStep !== "generate" ? <ErrorState message={errorMessage} /> : null}
+      {statusMessage ? <SuccessMessage message={statusMessage} /> : null}
+
+      <section className={`proto-wizard-stage${shouldShowPreview ? " has-preview" : ""}`}>
+        <div className="proto-wizard-main">{renderCurrentStep()}</div>
+
+        {shouldShowPreview ? (
+          <div className="proto-wizard-preview">
+            <PrototypePreview
+              classification={classification}
+              prototype={prototype}
+              prototypeResult={prototypeResult}
+              statusLabels={STATUS_LABELS}
+              solutionLabels={SOLUTION_LABELS}
+            />
+          </div>
+        ) : null}
       </section>
     </div>
   );

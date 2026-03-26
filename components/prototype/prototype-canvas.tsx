@@ -37,71 +37,47 @@ export const PrototypeCanvas = ({ prototype }: { prototype: PrototypeDefinition 
 
   return (
     <div className="d-flex flex-column gap-3" style={previewStyle}>
-      <div className="proto-canvas-header">
-        <div className="proto-canvas-summary">
-          <div className="proto-kicker">Resumen ejecutivo</div>
-          <h3 className="h4 mb-0">{prototype.name}</h3>
-          <p className="proto-muted mb-0">{prototype.summary}</p>
-        </div>
-
-        <div className="d-flex flex-wrap justify-content-between align-items-center gap-3">
-          {activeScreen ? (
-            <div className="proto-screen-meta flex-grow-1">
-              <div className="d-flex flex-wrap justify-content-between gap-2 align-items-start">
-                <div>
-                  <div className="proto-kicker mb-2">Pantalla activa</div>
-                  <h4 className="h5 mb-1">{activeScreen.name}</h4>
-                  <p className="proto-muted mb-0">{activeScreen.purpose}</p>
-                </div>
-                <div className="text-md-end">
-                  <div className="small proto-muted">Ruta simulada</div>
-                  <div className="proto-screen-route">{activeScreen.route}</div>
-                </div>
-              </div>
-            </div>
-          ) : null}
-
-          <div className="proto-device-controls">
-            <div className="proto-device-toggle" role="tablist" aria-label="Cambiar vista de dispositivo">
-              <button
-                aria-pressed={previewMode === "mobile"}
-                className={`proto-device-button${previewMode === "mobile" ? " is-active" : ""}`}
-                type="button"
-                onClick={() => setPreviewMode("mobile")}
-              >
-                Mobile
-              </button>
-              <button
-                aria-pressed={previewMode === "desktop"}
-                className={`proto-device-button${previewMode === "desktop" ? " is-active" : ""}`}
-                type="button"
-                onClick={() => setPreviewMode("desktop")}
-              >
-                Desktop
-              </button>
-            </div>
-            <div className="proto-device-caption">
-              <strong>{modeContent.title}</strong>
-              <span>{modeContent.description}</span>
-            </div>
+      <div className="d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div className="proto-device-controls">
+          <div className="proto-device-toggle" role="tablist" aria-label="Cambiar vista de dispositivo">
+            <button
+              aria-pressed={previewMode === "mobile"}
+              className={`proto-device-button${previewMode === "mobile" ? " is-active" : ""}`}
+              type="button"
+              onClick={() => setPreviewMode("mobile")}
+            >
+              Mobile
+            </button>
+            <button
+              aria-pressed={previewMode === "desktop"}
+              className={`proto-device-button${previewMode === "desktop" ? " is-active" : ""}`}
+              type="button"
+              onClick={() => setPreviewMode("desktop")}
+            >
+              Desktop
+            </button>
+          </div>
+          <div className="proto-device-caption">
+            <strong>{modeContent.title}</strong>
+            <span>{modeContent.description}</span>
           </div>
         </div>
-
-        {prototype.screens.length > 1 ? (
-          <div className="proto-screen-tabs">
-            {prototype.screens.map((screen, index) => (
-              <button
-                key={screen.id}
-                className={`proto-screen-tab${screen.id === activeScreen?.id ? " is-active" : ""}`}
-                type="button"
-                onClick={() => setActiveScreenId(screen.id)}
-              >
-                {index + 1}. {screen.name}
-              </button>
-            ))}
-          </div>
-        ) : null}
       </div>
+
+      {prototype.screens.length > 1 ? (
+        <div className="proto-screen-tabs">
+          {prototype.screens.map((screen, index) => (
+            <button
+              key={screen.id}
+              className={`proto-screen-tab${screen.id === activeScreen?.id ? " is-active" : ""}`}
+              type="button"
+              onClick={() => setActiveScreenId(screen.id)}
+            >
+              {index + 1}. {screen.name}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       <div className={`proto-device-stage is-${previewMode}`}>
         <div className={`proto-device-frame is-${previewMode}`}>
